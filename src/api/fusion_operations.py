@@ -57,6 +57,40 @@ def _find_tool(comp, tool_name: str):
     return tool, None
 
 
+def _parse_pos(pos):
+    """Parse the return value of FlowView.GetPos() into (x, y).
+
+    GetPos() may return a tuple/list, a dict-like object with numeric keys
+    (Lua table), or two separate values packed in various ways.
+    """
+    if pos is None:
+        return 0, 0
+    # Tuple or list: (x, y)
+    if isinstance(pos, (tuple, list)) and len(pos) >= 2:
+        return float(pos[0]), float(pos[1])
+    # Dict-like with 1-based or 0-based keys (Lua table mapped to Python dict)
+    if isinstance(pos, dict):
+        if 1 in pos and 2 in pos:
+            return float(pos[1]), float(pos[2])
+        if 0 in pos and 1 in pos:
+            return float(pos[0]), float(pos[1])
+        if "X" in pos and "Y" in pos:
+            return float(pos["X"]), float(pos["Y"])
+        if "x" in pos and "y" in pos:
+            return float(pos["x"]), float(pos["y"])
+    # Single number (shouldn't happen, but fallback)
+    if isinstance(pos, (int, float)):
+        return float(pos), 0
+    # Last resort: try iteration
+    try:
+        vals = list(pos.values()) if hasattr(pos, 'values') else list(pos)
+        if len(vals) >= 2:
+            return float(vals[0]), float(vals[1])
+    except Exception:
+        pass
+    return 0, 0
+
+
 def _get_flow(comp):
     """Get the FlowView, returning (flow, error_string)."""
     try:
@@ -97,7 +131,8 @@ def get_fusion_tool_list(resolve) -> str:
             # Position
             if flow:
                 try:
-                    x, y = flow.GetPos(tool)
+                    pos = flow.GetPos(tool)
+                    x, y = _parse_pos(pos)
                     tool_info["position"] = {"x": x, "y": y}
                 except Exception:
                     pass
@@ -293,7 +328,9 @@ def get_tool_position(resolve, tool_name: str = None) -> str:
             tool, error = _find_tool(comp, tool_name)
             if error:
                 return error
-            x, y = flow.GetPos(tool)
+            pos = flow.GetPos(tool)
+            # GetPos may return a tuple, list, dict, or table-like object
+            x, y = _parse_pos(pos)
             return json.dumps({"tool": tool_name, "x": x, "y": y}, indent=2)
         else:
             tools = comp.GetToolList()
@@ -302,7 +339,8 @@ def get_tool_position(resolve, tool_name: str = None) -> str:
 
             positions = []
             for i, tool in tools.items():
-                x, y = flow.GetPos(tool)
+                pos = flow.GetPos(tool)
+                x, y = _parse_pos(pos)
                 positions.append({
                     "name": _tool_name(tool),
                     "x": x, "y": y,
@@ -608,6 +646,13 @@ def copy_fusion_tool(resolve, source_name: str, new_name: str = None) -> str:
         return error
 
     try:
+        # Snapshot existing tool names before paste
+        before_tools = comp.GetToolList()
+        before_names = set()
+        if before_tools:
+            for i, t in before_tools.items():
+                before_names.add(_tool_name(t))
+
         comp.StartUndo(f"Copy {source_name}")
 
         settings = source.SaveSettings()
@@ -617,20 +662,28 @@ def copy_fusion_tool(resolve, source_name: str, new_name: str = None) -> str:
 
         comp.Paste(settings)
 
-        # Find the newly pasted tool (it will have a different name)
-        if new_name:
-            # The pasted tool gets an auto-generated name; find and rename it
-            all_tools = comp.GetToolList()
-            if all_tools:
-                # The last tool in the list is typically the newly pasted one
-                last_tool = None
-                for i, t in all_tools.items():
-                    last_tool = t
-                if last_tool and _tool_name(last_tool) != source_name:
-                    last_tool.SetAttrs({"TOOLS_Name": new_name})
+        # Find the newly added tool by diffing tool lists
+        after_tools = comp.GetToolList()
+        new_tool = None
+        pasted_name = None
+        if after_tools:
+            for i, t in after_tools.items():
+                t_name = _tool_name(t)
+                if t_name not in before_names:
+                    new_tool = t
+                    pasted_name = t_name
+                    break
+
+        if new_tool and new_name:
+            new_tool.SetAttrs({"TOOLS_Name": new_name})
+            pasted_name = new_name
 
         comp.EndUndo(True)
-        return json.dumps({"status": "success", "copied_from": source_name, "new_name": new_name}, indent=2)
+        return json.dumps({
+            "status": "success",
+            "copied_from": source_name,
+            "new_tool_name": pasted_name or new_name,
+        }, indent=2)
     except Exception as e:
         try:
             comp.EndUndo(False)
