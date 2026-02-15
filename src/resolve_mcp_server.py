@@ -4834,6 +4834,242 @@ def fusion_add_mask(target_tool: str, mask_type: str = "RectangleMask") -> str:
     from src.api.fusion_operations import add_fusion_mask
     return add_fusion_mask(resolve, target_tool, mask_type)
 
+# ==================== Edit Page Operations ====================
+
+@mcp.tool()
+def edit_get_timeline_detail() -> str:
+    """Get comprehensive info about the current timeline including track counts, timecode, frame range, and settings."""
+    from src.api.edit_operations import get_current_timeline_detail
+    return get_current_timeline_detail(resolve)
+
+@mcp.tool()
+def edit_get_track_count(track_type: str = "video") -> str:
+    """Get the number of tracks of a given type.
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+    """
+    from src.api.edit_operations import get_track_count
+    return get_track_count(resolve, track_type)
+
+@mcp.tool()
+def edit_get_timeline_items(track_type: str = "video", track_index: int = 1) -> str:
+    """Get all clips/items in a specific timeline track with detailed properties.
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+        track_index: Track number (1-based)
+    """
+    from src.api.edit_operations import get_timeline_items_detailed
+    return get_timeline_items_detailed(resolve, track_type, track_index)
+
+@mcp.tool()
+def edit_get_item_detail(track_type: str, track_index: int, item_index: str) -> str:
+    """Get full properties of a single timeline item.
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+        track_index: Track number (1-based)
+        item_index: Item index (0-based) or 'current' for playhead position
+    """
+    from src.api.edit_operations import get_timeline_item_detail
+    return get_timeline_item_detail(resolve, track_type, track_index, item_index)
+
+@mcp.tool()
+def edit_set_item_property(track_type: str, track_index: int, item_index: str,
+                           property_name: str, value: str) -> str:
+    """Set a property on a timeline item (Pan, Tilt, ZoomX, ZoomY, Opacity, Speed, etc.).
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+        track_index: Track number (1-based)
+        item_index: Item index (0-based) or 'current' for playhead position
+        property_name: Property name (e.g. 'Pan', 'Tilt', 'ZoomX', 'ZoomY', 'RotationAngle', 'Opacity', 'Speed')
+        value: Value to set (auto-converted to appropriate type)
+    """
+    from src.api.edit_operations import set_timeline_item_property
+    return set_timeline_item_property(resolve, track_type, track_index, item_index, property_name, value)
+
+@mcp.tool()
+def edit_set_clip_color(track_type: str, track_index: int, item_index: str, color: str) -> str:
+    """Set the color label of a timeline clip.
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+        track_index: Track number (1-based)
+        item_index: Item index (0-based) or 'current'
+        color: Color name (Orange, Apricot, Yellow, Lime, Olive, Green, Teal, Navy, Blue, Purple, Violet, Pink, Tan, Beige, Brown, Chocolate)
+    """
+    from src.api.edit_operations import set_clip_color
+    return set_clip_color(resolve, track_type, track_index, item_index, color)
+
+@mcp.tool()
+def edit_set_clip_enabled(track_type: str, track_index: int, item_index: str, enabled: bool) -> str:
+    """Enable or disable a timeline clip.
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+        track_index: Track number (1-based)
+        item_index: Item index (0-based) or 'current'
+        enabled: True to enable, False to disable
+    """
+    from src.api.edit_operations import set_clip_enabled
+    return set_clip_enabled(resolve, track_type, track_index, item_index, enabled)
+
+@mcp.tool()
+def edit_set_current_timecode(timecode: str) -> str:
+    """Move the playhead to a specific timecode.
+
+    Args:
+        timecode: Timecode string (e.g. '01:00:05:00')
+    """
+    from src.api.edit_operations import set_current_timecode
+    return set_current_timecode(resolve, timecode)
+
+@mcp.tool()
+def edit_get_timeline_markers() -> str:
+    """Get all markers on the current timeline."""
+    from src.api.edit_operations import get_timeline_markers
+    return get_timeline_markers(resolve)
+
+@mcp.tool()
+def edit_delete_marker(frame: int = None, color: str = None) -> str:
+    """Delete timeline markers by frame number or by color.
+
+    Args:
+        frame: Frame number of the marker to delete
+        color: Delete all markers of this color
+    """
+    from src.api.edit_operations import delete_timeline_marker
+    return delete_timeline_marker(resolve, frame, color)
+
+@mcp.tool()
+def edit_add_track(track_type: str) -> str:
+    """Add a track to the current timeline.
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+    """
+    from src.api.edit_operations import add_track
+    return add_track(resolve, track_type)
+
+@mcp.tool()
+def edit_delete_track(track_type: str, track_index: int) -> str:
+    """Delete a track from the current timeline.
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+        track_index: Track number (1-based)
+    """
+    from src.api.edit_operations import delete_track
+    return delete_track(resolve, track_type, track_index)
+
+@mcp.tool()
+def edit_set_track_name(track_type: str, track_index: int, name: str) -> str:
+    """Set the name of a track.
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+        track_index: Track number (1-based)
+        name: New track name
+    """
+    from src.api.edit_operations import set_track_name
+    return set_track_name(resolve, track_type, track_index, name)
+
+@mcp.tool()
+def edit_set_track_lock(track_type: str, track_index: int, locked: bool) -> str:
+    """Lock or unlock a track.
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+        track_index: Track number (1-based)
+        locked: True to lock, False to unlock
+    """
+    from src.api.edit_operations import set_track_lock
+    return set_track_lock(resolve, track_type, track_index, locked)
+
+@mcp.tool()
+def edit_set_track_enable(track_type: str, track_index: int, enabled: bool) -> str:
+    """Enable or disable a track.
+
+    Args:
+        track_type: 'video', 'audio', or 'subtitle'
+        track_index: Track number (1-based)
+        enabled: True to enable, False to disable
+    """
+    from src.api.edit_operations import set_track_enable
+    return set_track_enable(resolve, track_type, track_index, enabled)
+
+@mcp.tool()
+def edit_duplicate_timeline(new_name: str = None) -> str:
+    """Duplicate the current timeline.
+
+    Args:
+        new_name: Optional name for the duplicated timeline
+    """
+    from src.api.edit_operations import duplicate_timeline
+    return duplicate_timeline(resolve, new_name)
+
+@mcp.tool()
+def edit_export_timeline(export_path: str, export_type: str = "AAF") -> str:
+    """Export the current timeline to a file.
+
+    Args:
+        export_path: File path to export to
+        export_type: Export format ('AAF', 'EDL', 'XML', 'FCPXML')
+    """
+    from src.api.edit_operations import export_timeline
+    return export_timeline(resolve, export_path, export_type)
+
+@mcp.tool()
+def edit_insert_fusion_title(title_name: str) -> str:
+    """Insert a Fusion title into the timeline at the playhead position.
+
+    Args:
+        title_name: Name of the Fusion title to insert
+    """
+    from src.api.edit_operations import insert_fusion_title
+    return insert_fusion_title(resolve, title_name)
+
+@mcp.tool()
+def edit_insert_generator(generator_name: str) -> str:
+    """Insert a generator into the timeline at the playhead position.
+
+    Args:
+        generator_name: Name of the generator to insert
+    """
+    from src.api.edit_operations import insert_generator
+    return insert_generator(resolve, generator_name)
+
+@mcp.tool()
+def edit_set_voice_isolation(track_type: str, track_index: int, item_index: str, enabled: bool) -> str:
+    """Enable or disable voice isolation on a timeline clip.
+
+    Args:
+        track_type: 'video' or 'audio'
+        track_index: Track number (1-based)
+        item_index: Item index (0-based) or 'current'
+        enabled: True to enable, False to disable
+    """
+    from src.api.edit_operations import set_voice_isolation
+    return set_voice_isolation(resolve, track_type, track_index, item_index, enabled)
+
+@mcp.tool()
+def edit_get_media_pool_clips(folder_name: str = None) -> str:
+    """Get clips from the media pool with detailed properties.
+
+    Args:
+        folder_name: Optional folder name to list clips from (default: current folder)
+    """
+    from src.api.edit_operations import get_media_pool_clips
+    return get_media_pool_clips(resolve, folder_name)
+
+@mcp.tool()
+def edit_get_media_pool_structure() -> str:
+    """Get the complete folder tree structure of the media pool."""
+    from src.api.edit_operations import get_media_pool_structure
+    return get_media_pool_structure(resolve)
+
 # Start the server
 if __name__ == "__main__":
     try:
