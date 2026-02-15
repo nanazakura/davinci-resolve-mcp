@@ -4625,6 +4625,59 @@ def get_project_info_endpoint() -> Dict[str, Any]:
     
     return get_project_info(current_project)
 
+# ==================== Fusion Operations ====================
+
+@mcp.tool()
+def execute_fusion_script(script: str) -> str:
+    """Execute a Lua script in the current Fusion composition.
+
+    Args:
+        script: The Lua script to execute (e.g. "comp:AddTool('SoftGlow')")
+    """
+    from src.api.fusion_operations import execute_fusion_script as exec_func
+    return exec_func(resolve, script)
+
+@mcp.tool()
+def fusion_add_tool(tool_id: str, name: str = None) -> str:
+    """Add a tool (node) to the current Fusion composition.
+
+    Args:
+        tool_id: The Fusion tool ID (e.g. 'Blur', 'SoftGlow', 'Transform', 'ColorCorrector')
+        name: Optional custom name for the tool
+    """
+    from src.api.fusion_operations import add_fusion_tool
+    return add_fusion_tool(resolve, tool_id, name)
+
+@mcp.tool()
+def fusion_connect_tools(output_tool: str, input_tool: str, input_name: str = "Input") -> str:
+    """Connect two tools in the Fusion composition by linking output to input.
+
+    Args:
+        output_tool: Name of the tool whose output will be connected
+        input_tool: Name of the tool whose input will receive the connection
+        input_name: The input name on the target tool (default: 'Input')
+    """
+    from src.api.fusion_operations import connect_fusion_tools
+    return connect_fusion_tools(resolve, output_tool, input_tool, input_name)
+
+@mcp.tool()
+def fusion_set_input(tool_name: str, input_name: str, value: str) -> str:
+    """Set an input parameter value on a Fusion tool.
+
+    Args:
+        tool_name: Name of the tool to modify
+        input_name: Name of the input parameter (e.g. 'XBlurStrength', 'Blend', 'Gain')
+        value: The value to set (passed as string, automatically converted to number/bool if applicable)
+    """
+    from src.api.fusion_operations import set_fusion_tool_input
+    return set_fusion_tool_input(resolve, tool_name, input_name, value)
+
+@mcp.tool()
+def fusion_get_tool_list() -> str:
+    """Get a list of all tools (nodes) in the current Fusion composition."""
+    from src.api.fusion_operations import get_fusion_tool_list
+    return get_fusion_tool_list(resolve)
+
 # Start the server
 if __name__ == "__main__":
     try:
