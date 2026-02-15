@@ -4630,6 +4630,7 @@ def get_project_info_endpoint() -> Dict[str, Any]:
 @mcp.tool()
 def execute_fusion_script(script: str) -> str:
     """Execute a Lua script in the current Fusion composition.
+    To return data from Lua, use comp:SetData("_mcp_result", value) in your script.
 
     Args:
         script: The Lua script to execute (e.g. "comp:AddTool('SoftGlow')")
@@ -4661,22 +4662,177 @@ def fusion_connect_tools(output_tool: str, input_tool: str, input_name: str = "I
     return connect_fusion_tools(resolve, output_tool, input_tool, input_name)
 
 @mcp.tool()
+def fusion_disconnect_tools(tool_name: str, input_name: str = "Input") -> str:
+    """Disconnect an input on a Fusion tool.
+
+    Args:
+        tool_name: Name of the tool to disconnect
+        input_name: The input name to disconnect (default: 'Input')
+    """
+    from src.api.fusion_operations import disconnect_fusion_tools
+    return disconnect_fusion_tools(resolve, tool_name, input_name)
+
+@mcp.tool()
 def fusion_set_input(tool_name: str, input_name: str, value: str) -> str:
     """Set an input parameter value on a Fusion tool.
 
     Args:
         tool_name: Name of the tool to modify
-        input_name: Name of the input parameter (e.g. 'XBlurStrength', 'Blend', 'Gain')
+        input_name: Name of the input parameter (e.g. 'XBlurSize', 'Blend', 'Gain')
         value: The value to set (passed as string, automatically converted to number/bool if applicable)
     """
     from src.api.fusion_operations import set_fusion_tool_input
     return set_fusion_tool_input(resolve, tool_name, input_name, value)
 
 @mcp.tool()
+def fusion_set_keyframe(tool_name: str, input_name: str, frame: int, value: str) -> str:
+    """Set a keyframe on a Fusion tool input at a specific frame.
+
+    Args:
+        tool_name: Name of the tool to modify
+        input_name: Name of the input parameter
+        frame: The frame number to set the keyframe at
+        value: The value to set (passed as string, automatically converted to number/bool if applicable)
+    """
+    from src.api.fusion_operations import set_fusion_keyframe
+    return set_fusion_keyframe(resolve, tool_name, input_name, frame, value)
+
+@mcp.tool()
 def fusion_get_tool_list() -> str:
-    """Get a list of all tools (nodes) in the current Fusion composition."""
+    """Get a list of all tools (nodes) in the current Fusion composition with position, connection, and enabled status."""
     from src.api.fusion_operations import get_fusion_tool_list
     return get_fusion_tool_list(resolve)
+
+@mcp.tool()
+def fusion_get_selected_tools() -> str:
+    """Get a list of currently selected tools in the Fusion composition."""
+    from src.api.fusion_operations import get_selected_tools
+    return get_selected_tools(resolve)
+
+@mcp.tool()
+def fusion_get_tool_inputs(tool_name: str) -> str:
+    """Get all input parameters of a Fusion tool with their current values and types.
+
+    Args:
+        tool_name: Name of the tool to inspect
+    """
+    from src.api.fusion_operations import get_tool_inputs
+    return get_tool_inputs(resolve, tool_name)
+
+@mcp.tool()
+def fusion_get_tool_outputs(tool_name: str) -> str:
+    """Get all outputs of a Fusion tool.
+
+    Args:
+        tool_name: Name of the tool to inspect
+    """
+    from src.api.fusion_operations import get_tool_outputs
+    return get_tool_outputs(resolve, tool_name)
+
+@mcp.tool()
+def fusion_get_connections() -> str:
+    """Get all node connections in the current Fusion composition."""
+    from src.api.fusion_operations import get_connections
+    return get_connections(resolve)
+
+@mcp.tool()
+def fusion_get_tool_position(tool_name: str = None) -> str:
+    """Get position of a specific tool or all tools on the Fusion FlowView.
+
+    Args:
+        tool_name: Name of the tool (omit for all tools)
+    """
+    from src.api.fusion_operations import get_tool_position
+    return get_tool_position(resolve, tool_name)
+
+@mcp.tool()
+def fusion_set_tool_position(tool_name: str, x: float, y: float) -> str:
+    """Set the position of a tool on the Fusion FlowView.
+
+    Args:
+        tool_name: Name of the tool to move
+        x: X coordinate
+        y: Y coordinate
+    """
+    from src.api.fusion_operations import set_tool_position
+    return set_tool_position(resolve, tool_name, x, y)
+
+@mcp.tool()
+def fusion_delete_tool(tool_name: str) -> str:
+    """Delete a tool from the Fusion composition.
+
+    Args:
+        tool_name: Name of the tool to delete
+    """
+    from src.api.fusion_operations import delete_fusion_tool
+    return delete_fusion_tool(resolve, tool_name)
+
+@mcp.tool()
+def fusion_rename_tool(old_name: str, new_name: str) -> str:
+    """Rename a tool in the Fusion composition.
+
+    Args:
+        old_name: Current name of the tool
+        new_name: New name for the tool
+    """
+    from src.api.fusion_operations import rename_fusion_tool
+    return rename_fusion_tool(resolve, old_name, new_name)
+
+@mcp.tool()
+def fusion_enable_disable_tool(tool_name: str, enabled: bool = True) -> str:
+    """Enable or disable (pass-through) a tool in the Fusion composition.
+
+    Args:
+        tool_name: Name of the tool
+        enabled: True to enable, False to disable (pass-through)
+    """
+    from src.api.fusion_operations import enable_disable_fusion_tool
+    return enable_disable_fusion_tool(resolve, tool_name, enabled)
+
+@mcp.tool()
+def fusion_copy_tool(source_name: str, new_name: str = None) -> str:
+    """Copy a tool with all its settings in the Fusion composition.
+
+    Args:
+        source_name: Name of the tool to copy
+        new_name: Optional name for the copied tool
+    """
+    from src.api.fusion_operations import copy_fusion_tool
+    return copy_fusion_tool(resolve, source_name, new_name)
+
+@mcp.tool()
+def fusion_auto_arrange(direction: str = "horizontal", spacing: float = 2.0) -> str:
+    """Auto-arrange tools in the Fusion FlowView based on connection topology.
+
+    Args:
+        direction: Layout direction - 'horizontal' (left to right) or 'vertical' (top to bottom)
+        spacing: Spacing between nodes (default: 2.0)
+    """
+    from src.api.fusion_operations import auto_arrange_tools
+    return auto_arrange_tools(resolve, direction, spacing)
+
+@mcp.tool()
+def fusion_add_expression(tool_name: str, input_name: str, expression: str) -> str:
+    """Set an expression on a Fusion tool input.
+
+    Args:
+        tool_name: Name of the tool
+        input_name: Name of the input parameter
+        expression: The expression string to set
+    """
+    from src.api.fusion_operations import add_fusion_expression
+    return add_fusion_expression(resolve, tool_name, input_name, expression)
+
+@mcp.tool()
+def fusion_add_mask(target_tool: str, mask_type: str = "RectangleMask") -> str:
+    """Add a mask and connect it to a tool's effect mask input.
+
+    Args:
+        target_tool: Name of the tool to add the mask to
+        mask_type: Mask type (e.g. 'RectangleMask', 'EllipseMask', 'BSplineMask', 'PolygonMask')
+    """
+    from src.api.fusion_operations import add_fusion_mask
+    return add_fusion_mask(resolve, target_tool, mask_type)
 
 # Start the server
 if __name__ == "__main__":
